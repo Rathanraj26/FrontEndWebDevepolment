@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Dynamic Weather Dashboard</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: linear-gradient(to right, #74ebd5, #acb6e5);
+      margin: 0;
+      padding: 0;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+    }
+
+    .weather-container {
+      background: white;
+      padding: 20px 30px;
+      border-radius: 16px;
+      box-shadow: 0 8px 16px rgba(0,0,0,0.2);
+      text-align: center;
+      max-width: 400px;
+      width: 100%;
+    }
+
+    h2 {
+      margin: 10px 0;
+    }
+
+    .temp {
+      font-size: 2em;
+      font-weight: bold;
+    }
+
+    .weather-icon {
+      width: 80px;
+    }
+
+    input {
+      padding: 10px;
+      width: 70%;
+      border-radius: 8px;
+      border: 1px solid #ccc;
+      margin-top: 10px;
+    }
+
+    button {
+      padding: 10px;
+      border: none;
+      background: #4a90e2;
+      color: white;
+      border-radius: 8px;
+      cursor: pointer;
+      margin-left: 5px;
+    }
+
+    button:hover {
+      background: #357ab8;
+    }
+  </style>
+</head>
+<body>
+  <div class="weather-container">
+    <h2>🌤️ Weather Dashboard</h2>
+    <p id="location">Detecting location...</p>
+    <p class="temp" id="temperature">-- °C</p>
+    <img id="icon" class="weather-icon" src="" alt="">
+    <p id="description">---</p>
+
+    <!-- 🔹 City Input -->
+    <div class="forecast">
+      <input type="text" id="cityInput" placeholder="Enter city name"/>
+      <button onclick="getWeatherByCity()">Search</button>
+    </div>
+  </div>
+
+  <script>
+    const apiKey = "YOUR_API_KEY"; // <-- Replace with your OpenWeatherMap API key
+
+    // 🔹 Fetch weather by city name
+    async function getWeatherByCity() {
+      const city = document.getElementById("cityInput").value.trim();
+      if (!city) {
+        alert("Please enter a city name!");
+        return;
+      }
+      fetchWeather(`https://api.openweathermap.org/data/2.5/weather?q=${city}&units=metric&appid=${apiKey}`);
+    }
+
+    // 🔹 Fetch weather by API URL
+    async function fetchWeather(url) {
+      try {
+        const res = await fetch(url);
+        const data = await res.json();
+        if (data.cod !== 200) {
+          document.getElementById("location").textContent = "City not found!";
+          document.getElementById("temperature").textContent = "-- °C";
+          document.getElementById("description").textContent = "---";
+          document.getElementById("icon").src = "";
+          return;
+        }
+
+        document.getElementById("location").textContent = `${data.name}, ${data.sys.country}`;
+        document.getElementById("temperature").textContent = `${Math.round(data.main.temp)} °C`;
+        document.getElementById("description").textContent = data.weather[0].description;
+        document.getElementById("icon").src = `http://openweathermap.org/img/wn/${data.weather[0].icon}@2x.png`;
+      } catch (error) {
+        console.error("Error fetching weather:", error);
+      }
+    }
+
+    // 🔹 Get weather by device location
+    function getWeatherByLocation() {
+      if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(
+          position => {
+            const lat = position.coords.latitude;
+            const lon = position.coords.longitude;
+            fetchWeather(`https://api.openweathermap.org/data/2.5/weather?lat=${lat}&lon=${lon}&units=metric&appid=${apiKey}`);
+          },
+          error => {
+            console.error("Geolocation error:", error);
+            document.getElementById("location").textContent = "Location unavailable";
+          }
+        );
+      } else {
+        document.getElementById("location").textContent = "Geolocation not supported";
+      }
+    }
+
+    // 🔹 Load weather on startup
+    getWeatherByLocation();
+  </script>
+</body>
+</html>
